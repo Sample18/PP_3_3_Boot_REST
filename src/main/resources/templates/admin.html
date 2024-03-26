@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Admin</title>
+</head>
+<body>
+<div>
+    <table border="1">
+        <thead>
+        <tr>
+            <td>Id</td>
+            <td>Department</td>
+            <td>Name</td>
+            <td>Surname</td>
+            <td>Salary</td>
+            <td>Commands</td>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="user : ${usersList}">
+            <td th:text="${user.getId()}">Id</td>
+            <td th:text="${user.getDepartment()}">Department</td>
+            <td th:text="${user.getName()}">Name</td>
+            <td th:text="${user.getSurname()}">Surname</td>
+            <td th:text="${user.getSalary()}">Salary</td>
+            <td>
+                <a th:href="@{'admin/remove?id=' + ${user.getId()}}">Remove</a>
+                <a th:href="@{'admin/edit?id=' + ${user.getId()}}">Update</a>
+            </td>
+        </tr>
+        </tbody>
+    </table>
+    <div>
+        <a th:href="@{admin/new}">Add new user</a>
+        <a th:href="@{/logout}">Logout</a>
+
+    </div>
+</div>
+</body>
+</html>
