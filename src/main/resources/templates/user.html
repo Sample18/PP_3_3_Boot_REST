@@ -1,13 +1,64 @@
 <!DOCTYPE html>
-<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org" xmlns:sec="https://www.thymeleaf.org/thymeleaf-extras-springsecurity3">
+<html xmlns="http://www.w3.org/1999/xhtml" xmlns:th="https://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/thymeleaf-extras-springsecurity5">
 <head>
     <title>Spring Security Example</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.2/dist/css/bootstrap.min.css"
+          integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
 </head>
 <body>
-<h1><span th:text="${user.getName()}"></span> welcome spring boot security page!</h1>
-<h4>ID: <span th:text="${user.getId()}"/></h4>
-<h4>Department: <span th:text="${user.getDepartment()}"/></h4>
-<h4>Salary: <span th:text="${user.getSalary()}"/></h4>
-<a th:href="@{/logout}">Logout</a>
+<div sec:authorize="isAuthenticated()">
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <span class="navbar-brand" th:text="${#authentication.name}">Username</span>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <span class="nav-link" th:text="'with roles: ' + ${#authentication.authorities}"></span>
+                </li>
+            </ul>
+            <span class="navbar-text">
+      <a class="nav-link" th:href="@{/logout}">Logout</a>
+    </span>
+        </div>
+    </nav>
+    <div class="row m-0">
+        <ul class="col-2 nav nav-pills flex-column p-0 pt-4">
+            <li class="nav-item" sec:authorize="hasRole('ROLE_ADMIN')">
+                <a class="nav-link" th:href="@{/admin}">Admin</a>
+            </li>
+            <li class="nav-item" sec:authorize="hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')">
+                <a class="nav-link active" th:href="@{/user}">User</a>
+            </li>
+        </ul>
+        <div class="col bg-light p-4">
+            <h1 sec:authorize="hasRole('ROLE_USER') or hasRole('ROLE_ADMIN')">User information page</h1>
+            <div class="card border-0" sec:authorize="hasRole('ROLE_ADMIN') or hasRole('ROLE_USER')">
+                <h5 class="card-header border-right border-left border-bottom-0">About user</h5>
+                <div class="card-body border">
+                    <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Surname</th>
+                            <th scope="col">Salary</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td th:text="${user.getId()}">Id</td>
+                            <td th:text="${user.getDepartment()}">Department</td>
+                            <td th:text="${user.getName()}">Name</td>
+                            <td th:text="${user.getSurname()}">Surname</td>
+                            <td th:text="${user.getSalary()}">Salary</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
 </body>
 </html>

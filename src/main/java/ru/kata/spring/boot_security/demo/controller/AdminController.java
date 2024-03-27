@@ -31,6 +31,7 @@ public class AdminController {
     @GetMapping()
     public String startAdmin(Model model) {
         model.addAttribute("usersList", userService.getAllUsers());
+        model.addAttribute("roles", roleService.getAllRoles());
         return "admin";
     }
 
@@ -38,13 +39,6 @@ public class AdminController {
     public String removeUser(@RequestParam Integer id) {
         userService.remove(id);
         return "redirect:/admin";
-    }
-
-    @GetMapping(value = "/edit")
-    public String editUser(@RequestParam Integer id, Model model) {
-        model.addAttribute("user", userService.findById(id));
-        model.addAttribute("roles", roleService.getAllRoles());
-        return "editUser";
     }
 
     @PostMapping(value = "/edit")
