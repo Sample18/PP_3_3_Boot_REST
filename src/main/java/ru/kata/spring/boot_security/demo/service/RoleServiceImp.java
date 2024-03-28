@@ -20,6 +20,12 @@ public class RoleServiceImp implements RoleService {
         return roleRepository.findByNameIn(roleNames);
     }
 
+    @Transactional
+    @Override
+    public void create(Role role) {
+        roleRepository.save(role);
+    }
+
     @Transactional(readOnly = true)
     @Override
     public List<Role> getAllRoles() {

@@ -9,4 +9,6 @@ public interface RoleService {
     List<Role> getAllRoles();
 
     List<Role> findByNameIn(List<String> roleNames);
+
+    void create(Role role);
 }
