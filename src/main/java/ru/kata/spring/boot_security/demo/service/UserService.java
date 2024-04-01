@@ -9,7 +9,11 @@ public interface UserService {
 
     void remove(int id);
 
+    void create(User user, String[] selectedRoles);
+
     void create(User user);
+
+    void update(User user, String[] selectedRoles);
 
     void update(User user);
 

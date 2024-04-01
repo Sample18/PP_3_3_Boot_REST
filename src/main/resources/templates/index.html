@@ -7,6 +7,514 @@
           integrity="sha384-xOolHFLEh07PJGoPkLv1IbcEPTNtaed2xpHsD9ESMhqIYd0nLMwNLD69Npy4HI+N" crossorigin="anonymous">
 </head>
 <body>
-<h1>Welcome to Index PAGE!</h1>
+<div>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <span class="navbar-brand">Username</span>
+        <div class="collapse navbar-collapse" id="navbarText">
+            <ul class="navbar-nav mr-auto">
+                <li class="nav-item active">
+                    <span id="nav-roles" class="nav-link"></span>
+                </li>
+            </ul>
+            <span class="navbar-text">
+                <a class="nav-link" href="/logout">Logout</a>
+            </span>
+        </div>
+    </nav>
+    <div class="row m-0">
+        <ul class="col-2 nav nav-pills flex-column p-0 pt-4">
+            <li id="nav-item-admin" class="nav-item nav-link">
+                <a class="nav-link active">Admin</a>
+            </li>
+            <li id="nav-item-user" class="nav-item nav-link">
+                <a class="nav-link">User</a>
+            </li>
+        </ul>
+        <div class="col bg-light p-4">
+            <h1 id="page-header">Admin panel</h1>
+            <div class="card border-0">
+                <div id="card-header-nav" class="card-header">
+                    <ul class="nav nav-tabs card-header-tabs">
+                        <li id="user-table-nav" class="nav-item">
+                            <a class="nav-link active">User table</a>
+                        </li>
+                        <li id="new-user-nav" class="nav-item">
+                            <a class="nav-link">New user</a>
+                        </li>
+                    </ul>
+                </div>
+                <h5 id="table-header" class="card-header border-right border-left border-bottom-0">All users</h5>
+                <div id="users-table" class="card-body border">
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    const ADMIN_URL = 'http://localhost:8080/admin'
+    const USER_URL = 'http://localhost:8080/user'
+
+    const navbarBrand = document.querySelector('.navbar-brand');
+    const navbarRoles = document.getElementById('nav-roles');
+    const navItemAdmin = document.getElementById('nav-item-admin');
+    const navItemUser = document.getElementById('nav-item-user');
+    const pageHeader = document.getElementById('page-header');
+    const cardHeaderNav = document.getElementById('card-header-nav');
+    const tableHeader = document.getElementById('table-header');
+    const usersTable = document.getElementById('users-table');
+    const userTableNav = document.getElementById('user-table-nav');
+    const newUserNav = document.getElementById('new-user-nav');
+
+
+    const getAllUsers = () => {
+        return fetch(ADMIN_URL)
+            .then((response) => {
+                return response.json();
+            })
+            .catch(() => {
+                console.log('error fetch');
+            });
+    }
+
+    const getAllRoles = () => {
+        return fetch(USER_URL + '/roles')
+            .then((response) => {
+                return response.json();
+            })
+            .catch(() => {
+                console.log('error fetch');
+            });
+    }
+
+    const getUserData = () => {
+        fetch(USER_URL)
+            .then((response) => {
+                return Promise.all([response.json(), getAllRoles()]);
+            })
+            .then(([userData, roles]) => {
+                dataToHTML(userData, roles);
+            })
+            .catch(() => {
+                dataToHTML()
+                console.log('error fetch');
+            });
+    }
+
+    window.addEventListener('load', getUserData);
+
+    function dataToHTML(data, roles) {
+        const isAdmin = data?.roles.find(r => r.name === 'ROLE_ADMIN')
+        const isUser = data?.roles.find(r => r.name === 'ROLE_USER')
+        const allRoles = roles
+
+        if(!isAdmin && !isUser) {
+            document.body.innerText = 'Welcome to index page'
+        } else {
+            navItemAdmin.addEventListener('click', () => {
+                navItemAdmin.firstElementChild.className = 'nav-link active'
+                navItemUser.firstElementChild.className = 'nav-link'
+                pageHeader.innerText = 'Admin panel'
+                cardHeaderNav.style.display = 'block'
+                tableHeader.innerText = 'All users'
+                getAllUsers()
+                    .then((data) => {
+                        createTable(data, allRoles);
+                    })
+                    .catch(() => {
+                        console.log('error fetch');
+                    });
+            })
+
+            navItemUser.addEventListener('click', () => {
+                navItemAdmin.firstElementChild.className = 'nav-link'
+                navItemUser.firstElementChild.className = 'nav-link active'
+                pageHeader.innerText = 'User information page'
+                cardHeaderNav.style.display = 'none'
+                tableHeader.innerText = 'About user'
+                createTable(data, allRoles)
+            })
+
+            userTableNav.addEventListener('click', () => {
+                newUserNav.firstElementChild.className = 'nav-link'
+                userTableNav.firstElementChild.className = 'nav-link active'
+                tableHeader.innerText = 'All users'
+                usersTable.className = 'card-body border'
+                getAllUsers()
+                    .then((data) => {
+                        createTable(data, allRoles);
+                    })
+                    .catch(() => {
+                        console.log('error fetch');
+                    });
+            })
+
+            newUserNav.addEventListener('click', () => {
+                newUserNav.firstElementChild.className = 'nav-link active'
+                userTableNav.firstElementChild.className = 'nav-link'
+                tableHeader.innerText = 'Add new user'
+                usersTable.className = 'card-body border d-flex justify-content-center'
+                createForm(allRoles)
+            })
+
+            navbarBrand.innerText = data.name
+            navbarRoles.innerText = 'with roles: ' + data.roles.map(r => r.name).join(', ')
+
+            if (!isAdmin) {
+                navItemAdmin.remove()
+                navItemUser.firstElementChild.className = 'nav-link active'
+                createTable(data, allRoles)
+            } else {
+                getAllUsers()
+                    .then((data) => {
+                        createTable(data, allRoles);
+                    })
+                    .catch(() => {
+                        console.log('error fetch');
+                    });
+            }
+
+            if (navItemUser.firstElementChild.className === 'nav-link active') {
+                pageHeader.innerText = 'User information page'
+                cardHeaderNav.style.display = 'none'
+                tableHeader.innerText = 'About user'
+            } else {
+                pageHeader.innerText = 'Admin panel'
+                tableHeader.innerText = 'All users'
+            }
+        }
+
+
+    }
+
+    function createTable(data, roles) {
+        if (!Array.isArray(data)) {
+            usersTable.innerHTML = `
+                        <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Surname</th>
+                            <th scope="col">Salary</th>
+                            <th scope="col">Role</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        <tr>
+                            <td>${data.id}</td>
+                            <td>${data.department}</td>
+                            <td>${data.name}</td>
+                            <td>${data.surname}</td>
+                            <td>${data.salary}</td>
+                            <td>${data.roles.map(r => r.name).join(', ')}</td>
+                        </tr>
+                        </tbody>
+                    </table>
+                    `
+        } else {
+            usersTable.innerHTML = `
+                        <table class="table table-striped">
+                        <thead>
+                        <tr>
+                            <th scope="col">Id</th>
+                            <th scope="col">Department</th>
+                            <th scope="col">Name</th>
+                            <th scope="col">Surname</th>
+                            <th scope="col">Salary</th>
+                            <th scope="col">Role</th>
+                            <th scope="col">Edit</th>
+                            <th scope="col">Delete</th>
+                        </tr>
+                        </thead>
+                        <tbody>
+                        ${data.map(u => (
+                `<tr>
+                                <td>${u.id}</td>
+                                <td>${u.department}</td>
+                                <td>${u.name}</td>
+                                <td>${u.surname}</td>
+                                <td>${u.salary}</td>
+                                <td>${u.roles.map(r => r.name).join(', ')}</td>
+                                <td>
+                                    <button type="button" class="btn btn-info" id="openModalBtn-${u.id}"
+                                        data-target="exampleModal-${u.id}">
+                                    Edit
+                                    </button>
+                                    <div class="modal fade" id="exampleModal-${u.id}" tabindex="-1" role="dialog"
+                                     aria-labelledby="exampleModalLabel-${u.id}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="exampleModalLabel-${u.id}">Edit
+                                                    User</h5>
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                        aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form id="edit-form-${u.id}" class="w-100 mx-auto d-flex flex-column" method="POST"
+                                                      action="${ADMIN_URL}/edit?id=${u.id}">
+                                                    <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                        <label class="text-center font-weight-bold"
+                                                               for="name">Name</label>
+                                                        <input class="form-control" name="name" type="text" id="name"
+                                                               value="${u.name}">
+                                                    </div>
+                                                    <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                        <label class="text-center font-weight-bold" for="surname">Surname</label>
+                                                        <input class="form-control" name="surname" type="text"
+                                                               id="surname" value="${u.surname}"/>
+                                                    </div>
+                                                    <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                        <label class="text-center font-weight-bold" for="department">Department</label>
+                                                        <input class="form-control" name="department" type="text"
+                                                               id="department" value="${u.department}"/>
+                                                    </div>
+                                                    <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                        <label class="text-center font-weight-bold"
+                                                               for="salary">Salary</label>
+                                                        <input class="form-control" name="salary" type="number"
+                                                               id="salary" value="${u.salary}"/>
+                                                    </div>
+
+                                                    <input name="username" value="${u.username}" hidden/>
+                                                    <input name="password" value="${u.password}" hidden/>
+
+                                                    <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                        <label class="text-center font-weight-bold"
+                                                               for="exampleFormControlSelect2">Roles:</label>
+                                                        <select multiple class="form-control"
+                                                                id="exampleFormControlSelect2" name="selectedRoles">
+                                                                ${roles.map(role => (`
+                                                                    <option value="${role.name}">${role.name}</option>
+                                                                `)).join('')}
+                                                       </select>
+                                                    </div>
+                                                    <div class="modal-footer">
+                                                        <button type="button" class="btn btn-secondary"
+                                                                data-dismiss="modal">Close
+                                                        </button>
+                                                        <button type="submit" class="btn btn-primary" onclick="editMainForm(event, ${u.id})">Edit user</button>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                                </td>
+                                <td>
+                                <button type="button" class="btn btn-danger" id="deleteModalBtn-${u.id}"
+                                    data-target="deleteModal-${u.id}">
+                                    Delete
+                                </button>
+                                <div class="modal fade" id="deleteModal-${u.id}" tabindex="-1" role="dialog"
+                                     aria-labelledby="deleteModalLabel-${u.id}" aria-hidden="true">
+                                    <div class="modal-dialog" role="document">
+                                        <div class="modal-content">
+                                            <div class="modal-header">
+                                                <h5 class="modal-title" id="deleteModalLabel-${u.id}">Delete
+                                                    user</h5>
+                                                <button type="button" class="close" data-dismiss="modal"
+                                                        aria-label="Close">
+                                                    <span aria-hidden="true">&times;</span>
+                                                </button>
+                                            </div>
+                                            <div class="modal-body">
+                                                <form class="w-100 mx-auto d-flex flex-column">
+                                                    <fieldset disabled>
+                                                        <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                            <label class="text-center font-weight-bold"
+                                                                   for="name">Name</label>
+                                                            <input class="form-control" value="${u.name}">
+                                                        </div>
+                                                        <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                            <label class="text-center font-weight-bold" for="surname">Surname</label>
+                                                            <input class="form-control" value="${u.surname}"/>
+                                                        </div>
+                                                        <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                            <label class="text-center font-weight-bold"
+                                                                   for="department">Department</label>
+                                                            <input class="form-control" value="${u.department}"/>
+                                                        </div>
+                                                        <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                            <label class="text-center font-weight-bold" for="salary">Salary</label>
+                                                            <input class="form-control" value="${u.salary}"/>
+                                                        </div>
+
+                                                        <input name="username" value="${u.username}" hidden="hidden"/>
+                                                        <input name="password" value="${u.password}" hidden="hidden"/>
+
+                                                        <div class="form-group d-flex flex-column justify-content-center w-50 mx-auto">
+                                                            <label class="text-center font-weight-bold"
+                                                                   for="exampleFormControlSelect3">Roles:</label>
+                                                            <select multiple class="form-control"
+                                                                    id="exampleFormControlSelect2" name="selectedRoles">
+                                                                    ${u.roles.map(role => (`
+                                                                        <option value="${role.name}">${role.name}</option>
+                                                                    `)).join('')}
+                                                           </select>
+                                                        </div>
+                                                    </fieldset>
+                                                </form>
+                                            </div>
+                                            <div class="modal-footer">
+                                                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                                                    Cancel
+                                                </button>
+                                                    <button type="button" class="btn btn-danger" onclick="deleteMainForm(event,ADMIN_URL + '/remove?id=' + ${u.id})">Delete</button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </td>
+                            </tr>`
+            )).join('')}
+                        </tbody>
+                    </table>`
+        }
+
+        document.querySelectorAll('[id^="openModalBtn-"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const modalId = this.getAttribute('data-target');
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('show');
+                    modal.style.display = 'block';
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.classList.add('modal-open');
+                }
+            });
+        });
+
+        document.querySelectorAll('[id^="deleteModalBtn-"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const modalId = this.getAttribute('data-target');
+                const modal = document.getElementById(modalId);
+                if (modal) {
+                    modal.classList.add('show');
+                    modal.style.display = 'block';
+                    modal.setAttribute('aria-hidden', 'false');
+                    document.body.classList.add('modal-open');
+                }
+            });
+        });
+
+        document.querySelectorAll('[data-dismiss="modal"]').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const modal = this.closest('.modal');
+                if (modal) {
+                    modal.classList.remove('show');
+                    modal.style.display = 'none';
+                    modal.setAttribute('aria-hidden', 'true');
+                    document.body.classList.remove('modal-open');
+                }
+            });
+        });
+    }
+
+    function deleteMainForm(event, url) {
+        event.preventDefault()
+        fetch(url)
+            .then((response) => {
+                return Promise.all([response.json(), getAllRoles()]);
+            })
+            .then(([data, roles]) => {
+                createTable(data, roles)
+            })
+            .catch(() => {
+                console.log('error fetch form')
+            });
+    }
+
+    function editMainForm(event, id) {
+        event.preventDefault()
+        const form = document.getElementById("edit-form-" + id)
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: form.method,
+            body: formData
+        })
+            .then((response) => {
+                return Promise.all([response.json(), getAllRoles()]);
+            })
+            .then(([data, roles]) => {
+                createTable(data, roles)
+            })
+            .catch(() => {
+                console.log('error fetch form')
+            });
+    }
+
+    function sendCreateForm(event) {
+        event.preventDefault()
+        const form = document.getElementById("create-form")
+        const formData = new FormData(form);
+
+        fetch(form.action, {
+            method: form.method,
+            body: formData
+        })
+            .then((response) => {
+                return Promise.all([response.json(), getAllRoles()]);
+            })
+            .then(([data, roles]) => {
+                newUserNav.firstElementChild.className = 'nav-link'
+                userTableNav.firstElementChild.className = 'nav-link active'
+                tableHeader.innerText = 'All users'
+                usersTable.className = 'card-body border'
+                createTable(data, roles)
+            })
+            .catch(() => {
+                console.log('error fetch form')
+            });
+    }
+
+    function createForm(roles) {
+        usersTable.innerHTML = `
+            <form id="create-form" class="w-25 d-flex flex-column justify-content-center" method="POST"
+                          action="${ADMIN_URL}/new">
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="name">Name</label>
+                            <input class="form-control" name="name" type="text" id="name">
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="surname">Surname</label>
+                            <input class="form-control" name="surname" type="text" id="surname"/>
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="department">Department</label>
+                            <input class="form-control" name="department" type="text" id="department"/>
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="salary">Salary</label>
+                            <input class="form-control" name="salary" type="number" id="salary"/>
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="salary">Username</label>
+                            <input class="form-control" name="username" type="text" id="username"/>
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="salary">Password</label>
+                            <input class="form-control" name="password" type="password" id="password"/>
+                        </div>
+                        <div class="form-group d-flex flex-column justify-content-center">
+                            <label class="text-center font-weight-bold" for="exampleFormControlSelect2">Roles:</label>
+                               <select multiple class="form-control"
+                                   id="exampleFormControlSelect2" name="selectedRoles">
+                                   ${roles.map(role => (`
+                                   <option value="${role.name}">${role.name}</option>
+                                   `)).join('')}
+                                </select>
+                        </div>
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-success w-50" onclick="sendCreateForm(event)">Add user</button>
+                        </div>
+                    </form>
+            `
+    }
+</script>
 </body>
 </html>
