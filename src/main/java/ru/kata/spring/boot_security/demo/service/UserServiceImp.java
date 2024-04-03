@@ -64,6 +64,7 @@ public class UserServiceImp implements UserService, UserDetailsService {
         List<String> roleNames = Arrays.asList(selectedRoles);
         Set<Role> roles = roleService.findByNameIn(roleNames);
         user.setRoles(roles);
+        user.setPassword(passwordEncoder.encode(user.getPassword()));
         userRepository.save(user);
     }
 
