@@ -109,7 +109,7 @@
         const allRoles = roles
 
         if(!isAdmin && !isUser) {
-            window.location.href = 'http://localhost:8080/login'
+            window.location.href = '/login'
         } else {
             navItemAdmin.addEventListener('click', () => {
                 navItemAdmin.firstElementChild.className = 'nav-link active'
